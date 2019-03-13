@@ -1,0 +1,237 @@
+*vital.txt*		A comprehensive Vim utility functions for Vim plugins.
+
+==============================================================================
+CONTENTS				*Vital-contents*
+
+INTRODUCTION			|Vital-introduction|
+USAGE				|Vital-usage|
+TERM				|Vital-term|
+INTERFACE			|Vital-interface|
+  FUNCTIONS			  |Vital-functions|
+  Vital object			  |Vital-Vital-object|
+LINKS				|Vital-links|
+
+
+
+==============================================================================
+INTRODUCTION				*Vital-introduction*
+
+*vital* (or *vital.vim* ) is like a plugin which has both aspects of Bundler and
+jQuery at the same time.
+
+ Bundler: http://gembundler.com/
+ jQuery:  http://jquery.com/
+
+If you are a Vim user who doesn't make Vim plugins, please ignore this page.
+If you are a Vim plugin author, please check this out.
+
+==============================================================================
+USAGE					*Vital-usage*
+
+Assuming your Vim plugin name is "ujihisa", you can define your utility
+function set 'ujihisa#util' just by
+>
+    let s:P = vital#ujihisa#new().import('Process')
+    function! ujihisa#util#system(...)
+      return call(s:P.system, a:000, s:P)
+    endfunction
+<
+and then you can call functions by 'ujihisa#util#system()', without taking
+care of |vital.vim| itself. It's all hidden.
+
+|Vital| has module system. The below is an example to import/load a module
+"data/ordered_set" and to call a function "f()" of the module.
+>
+    let s:V = vital#ujihisa#new()
+    let s:O = s:V.import('Data.OrderedSet')
+    call s:O.f()
+<
+or
+>
+    let s:V = vital#ujihisa#new()
+    call s:V.load('Data.OrderedSet')
+    call s:V.Data.OrderedSet.f()
+<
+or
+>
+    let s:V = vital#ujihisa#new()
+    call s:V.import('Data.OrderedSet', s:)
+    call s:f()
+<
+We recommend you to use a capital letter for a Vital module dictionary to
+assign as Vital convention. That makes your code more readable among Vital
+programmers.
+
+When you start using vital for your own Vim plugin for the first time, you
+have to embed vital. See |vitalizer.txt| about the details how to embed and
+keep it updated.
+
+==============================================================================
+TERMS					*Vital-terms*
+
+{plugin-name}				*Vital-term-plugin-name*
+	It's same as the {name} in |:Vitalize| and this name is used in
+	|Vital-functions|.
+
+	Reserved name: "vital" ~
+	You can use "vital" as a {plugin-name} by default. When {plugin-name}
+	is "vital", you can use all available vital modules in 'runtimepath'.
+	Just use "vital" for development only and use unique {plugin-name} to
+	embed modules by |:Vitalize| and use them in your plugin.
+
+{module-name}				*Vital-term-module-name*
+	A name of vital module. {module-name} is capitalized words separated
+	with dot. Please see each |Vital-modules| help for detail.
+	Example:
+		"Prelude" (|vital/Prelude.txt|)
+		"Data.String" (|vital/Data/String.txt|)
+
+==============================================================================
+INTERFACE				*Vital-interface*
+
+------------------------------------------------------------------------------
+FUNCTIONS 				*Vital-functions*
+
+vital#of({plugin-name})				*vital#of()*
+	Creates a new Vital object(|Vital-Vital-object|).
+	This function is deprecated. Please use |vital#{plugin-name}#new()|
+	instead. vital#{plugin-name}#new() is faster than vital#of.
+
+vital#{plugin-name}#new()			*vital#{plugin-name}#new()*
+	Creates a new Vital object(|Vital-Vital-object|).
+	If you just want to use |Vital-Vital.import()|, You can use
+	|vital#{plugin-name}#import()| instead without any peformance
+	degradation.
+
+vital#{plugin-name}#import({module-name})	*vital#{plugin-name}#import()*
+	Imports a single module specified by {module-name}.
+>
+	let s:List = vital#vital#import('Data.List')
+	echo s:List.uniq([1,1,2])
+
+------------------------------------------------------------------------------
+Vital object 				*Vital-Vital-object*
+
+Vital.import({module-name} [, {to}])	*Vital-Vital.import()*
+	Imports a single module specified by {module-name} to {to} or empty
+	dictionary, and returns it.
+>
+	let s:List = s:V.import('Data.List')
+	echo s:List.uniq([1,1,2])
+
+Vital.load({module-name})		*Vital-Vital.load()*
+	Loads a module to the Vital directly.
+>
+	call s:V.load('Data.List')
+	echo s:V.Data.List.uniq([1,1,2])
+
+Vital.exists({module-name})		*Vital-Vital.exists()*
+	Checks whether a module specified by {module-name} exists.
+
+Vital.search({pattern})			*Vital-Vital.search()*
+	Searches available modules.  Returns module names by |List|.
+	Wildcard '*' is available in {pattern}.  This matches to any strings
+	in the part of module name that excludes ".".
+	Wildcard '**' is available in {pattern}.  This is similar to '*' but
+	also matches to ".".
+>
+	echo s:V.search('Data.*')
+	echo s:V.search('Data.*List')
+	echo s:V.search('**')  " returns all available module names
+
+Vital.plugin_name()			*Vital-Vital.plugin_name()*
+	Returns {plugin-name} of the Vital object.
+
+==============================================================================
+LINKS					*Vital-links*
+
+ Delegation in Vim script:
+   http://ujihisa.blogspot.com/2011/02/delegation-in-vim-script.html
+ Core concept of vital (in Japanese):
+   http://d.hatena.ne.jp/thinca/20110310/1299768323
+ How to make a vital module (in Japanese):
+   http://d.hatena.ne.jp/thinca/20110311/1299769233
+ API Reference (in Japanese):
+   http://d.hatena.ne.jp/kanno_kanno/20120107/1325949855
+ Let's use vital.vim (in Japanese):
+   http://qiita.com/rbtnn/items/deb569ebc94d5172a5e5
+
+ Vitalize command:
+  |vitalizer.txt|
+
+ Vital modules				*Vital-modules*
+  |vital/Assertion.txt|		assertion library.
+  |vital/Bitwise.txt|		bitwise operators.
+  |vital/ConcurrentProcess.txt|	Manages processes concurrently with vimproc.
+  |vital/Data/Base64.txt|	base64 utilities library.
+  |vital/Data/BigNum.txt|	Multi precision integer library.
+  |vital/Data/Closure.txt|	Provide Closure object.
+  |vital/Data/Collection.txt|	Utilities both for list and dict.
+  |vital/Data/Counter.txt|	Counter library to support convenient tallies.
+  |vital/Data/Dict.txt|		dictionary utilities library.
+  |vital/Data/LazyList.txt|	lazy list including file io.
+  |vital/Data/List.txt|		list utilities library.
+  |vital/Data/Optional.txt|	Provide optional value
+  |vital/Data/OrderedSet.txt|	ordered collection library.
+  |vital/Data/Set.txt|		set library.
+  |vital/Data/String.txt|	string utilities library.
+  |vital/Data/String/Interpolation.txt|	String interpolation in Vim
+  |vital/Data/Tree.txt|		tree utilities library.
+  |vital/Database/SQLite.txt|	sqlite utilities library.
+  |vital/DateTime.txt|		date and time library.
+  |vital/Experimental/Functor.txt|	Utilities for functor.
+  |vital/Hash/MD5.txt|	        MD5 encoding.
+  |vital/Interpreter/Brainf__k.txt|	Brainf**k interpreter
+  |vital/Locale/Message.txt|	very simple message localization library.
+  |vital/Lua/Prelude.txt|	crucial functions for lua integration
+  |vital/Mapping.txt|		Utilities for mapping.
+  |vital/Math.txt|		Mathematical functions
+  |vital/OptionParser.txt|	Option parser library for Vim.
+  |vital/Prelude.txt|		crucial functions
+  |vital/Process.txt|		Utilities for process.
+  |vital/Random.txt|		Random utility frontend library
+  |vital/Random/Mt19937ar.txt|	random number generator using mt19937ar
+  |vital/Random/Xor128.txt|	random number generator using xor128
+  |vital/System/Cache.txt|	An unified cache system
+  |vital/System/Cache/Base.txt|	An abstract class of unified cache system
+  |vital/System/Cache/Deprecated.txt|	store/restore cache into/from file
+  |vital/System/Cache/Dummy.txt|	A dummy class of unified cache system
+  |vital/System/Cache/File.txt|	A file based cache system
+  |vital/System/Cache/Memory.txt|	A dictionary instance based cache system
+  |vital/System/Cache/SingleFile.txt|	A single file based cache system
+  |vital/System/File.txt|	filesystem utilities library.
+  |vital/System/Filepath.txt|	path string utilities library.
+  |vital/System/Process.txt|	Cross platform process executor
+  |vital/System/Process/Mock.txt|	A Process client for test
+  |vital/System/Process/System.txt|	A Process client using system() function
+  |vital/System/Process/Vimproc.txt|	A Process client using vimproc
+  |vital/Text/CSV.txt|		CSV library.
+  |vital/Text/INI.txt|		INI file library.
+  |vital/Text/LTSV.txt|		LTSV library.
+  |vital/Text/Lexer.txt|	lexer library.
+  |vital/Text/Parser.txt|	parser library.
+  |vital/Text/Sexp.txt|		S-Expression parser.
+  |vital/Text/TOML.txt|		TOML library.
+  |vital/Text/Table.txt|	Character table library.
+  |vital/Vim/Buffer.txt|	Vim's buffer related stuff in general.
+  |vital/Vim/BufferManager.txt|	buffer manager.
+  |vital/Vim/Compat.txt|	Vim compatibility wrapper functions.
+  |vital/Vim/Guard.txt|		Vim options/variables guard utility
+  |vital/Vim/Message.txt|	Vim message functions
+  |vital/Vim/Python.txt|	Vim python/python3 compatible function
+  |vital/Vim/ScriptLocal.txt|	Get script-local things
+  |vital/Vim/Search.txt|	Vim's [I like function
+  |vital/Vim/ViewTracer.txt|	Trace |window| and |tabpage|.
+  |vital/Web/HTML.txt|		HTML parser written in pure Vim script.
+  |vital/Web/HTTP.txt|		simple HTTP client library.
+  |vital/Web/HTTP/Cookie.txt|	An HTTP Cookie utility.
+  |vital/Web/HTTP/CookieJar.txt|	Manage collection of HTTP Cookie.
+  |vital/Web/JSON.txt|		JSON parser written in pure Vim script.
+  |vital/Web/URI.txt|		URI manipulation library
+  |vital/Web/XML.txt|		XML parser written in pure Vim script.
+
+ External vital modules:
+  https://github.com/vim-jp/vital.vim/wiki/External-vital-modules
+
+==============================================================================
+vim:tw=78:fo=tcq2mM:ts=8:ft=help:norl

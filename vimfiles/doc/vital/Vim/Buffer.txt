@@ -1,0 +1,171 @@
+*vital/Vim/Buffer.txt*	Vim's buffer related stuff in general.
+
+Maintainers: thinca <thinca+vim@gmail.com>
+             ujihisa <ujihisa at gmail com>
+             lambdalisue <lambdalisue@hashnote.net>
+
+==============================================================================
+CONTENTS			*Vital.Vim.Buffer-contents*
+
+INTRODUCTION			|Vital.Vim.Buffer-introduction|
+USAGE				|Vital.Vim.Buffer-usage|
+INTERFACE			|Vital.Vim.Buffer-interface|
+  FUNCTIONS			  |Vital.Vim.Buffer-functions|
+
+
+
+==============================================================================
+INTRODUCTION			*Vital.Vim.Buffer-introduction*
+
+*Vital.Vim.Buffer* is a Vim's buffer library.
+
+
+==============================================================================
+USAGE				*Vital.Vim.Buffer-usage*
+>
+	let B = V.import('Vim.Buffer')
+	echo B.is_cmdwin() " 1 if you are in command-line-window.
+	
+	" Open A.txt via split. show 1 if the A.txt is newly loaded
+	echo B.open('A.txt', {'opener': 'split'})
+<
+
+
+==============================================================================
+INTERFACE			*Vital.Vim.Buffer-interface*
+
+------------------------------------------------------------------------------
+FUNCTIONS			*Vital.Vim.Buffer-functions*
+
+is_cmdwin()				*Vital.Vim.Buffer.is_cmdwin()*
+	Return a boolean (0/1) which indicate whether a current buffer is in
+	|command-line-window| or not. Note that most of buffer manipulation
+	does not work in the window.
+
+get_last_selected()			*Vital.Vim.Buffer.get_last_selected()*
+	Get the last selected text in visual mode.
+	This is almost the same as
+>
+                :normal! gvy
+<
+	without changing unnamed register.
+	But this function can work even in |textlock|.
+
+open({buffer} [, {options}])		*Vital.Vim.Buffer.open()*
+	Open a {buffer} and return a boolean which indicates whether the buffer
+	has been newly loaded or not.
+
+	If 0 or an empty string has been specified to {buffer}, the function
+	opens a new unnamed buffer. In this case, the return value is always 1.
+
+	If a number has been specified to {buffer}, the {buffer} is assumed as a
+	buffer number and an existing buffer will be opened.
+
+	If a string has been specified to {buffer}, the {buffer} is assumed as a
+	buffer name and an existing buffer which is identified by the name or
+	a new buffer will be opened.
+
+	In {options}, the following attributes are allowed
+
+	"opener"	A string or funcref used to open a buffer.
+			When a string has specified, the string is used in a
+			|execute| command to open a buffer.
+			When a funcref has specified, the funcref is called
+			with {buffer} as a dictionary function of {options}
+			and the funcref will have a responsibility to open a
+			buffer.
+			The default value is "enew" or "edit", depends on a
+			value of {buffer}.
+	
+	"mods"		A command modifiers like |vertical| or |botright|.
+			It is used as a prefix of "opener" when opening a
+			buffer.
+
+	"cmdarg"	A command argument (|++opt|) used to open a new named
+			buffer. Note that it may not affect properties of an
+			existing buffer or unnamed buffer due to the
+			limitation of Vim's builtin command.
+
+	For backward compatibility, an "opener" is allowed to directly be
+	assigned to the {options} attribute.
+>
+	" Open 'foo' with a default opener
+	call s:Buffer.open('foo')
+
+	" Open 'foo' with 'split'
+	call s:Buffer.open('foo', {'opener': 'split'})
+
+	" Open 'foo' with 'split' (deprecated)
+	call s:Buffer.open('foo', 'split')
+
+	" Open 'foo' with 'botright split ++enc=utf8 ++ff=dos'
+	call s:Buffer.open('foo', {
+	      \ 'opener': 'split',
+	      \ 'mods': 'botright',
+	      \ 'cmdarg': '++enc=utf8 ++ff=dos',
+	      \})
+
+	" Open 'foo' with 'botright split ++enc=utf8 ++ff=dos'
+	function! s:opener(buffer) abort dict
+	  execute self.mods 'split' self.cmdarg a:buffer
+	endfunction
+	call s:Buffer.open('foo', {
+	      \ 'opener': function('s:opener'),
+	      \ 'mods': 'botright',
+	      \ 'cmdarg': '++enc=utf8 ++ff=dos',
+	      \})
+<
+
+read_content({content}[, {options}])	*Vital.Vim.Buffer.read_content()*
+	Insert {content} (|List|) below the cursor of the current buffer.
+	It uses |:read| command internally to allow automatic fileencoding
+	detection of Vim (See |fileencodings|).
+	The following attributes are allowed in {options}:
+
+	'tempfile'
+	A name of temporary file.
+	Note that the file will be removed automatically.
+	A default value is a result |String| of |tempname()|.
+	'fileformat'
+	To overrides 'fileformat'. See |++ff|.
+	A default value is ''.
+	'encoding'
+	To overrides 'fileencoding'. See |++enc|.
+	A default value is ''.
+	'binary'
+	To sets 'binary'. See |++bin|.
+	A default value is 0.
+	'nobin'
+	To resets 'binary'. See |++nobin|.
+	A default value is 0.
+	'bad'
+	To specifies behavior for bad characters. See |++bad|.
+	A default value is ''.
+	'edit'
+	To keep option values as if editing a file. See |++edit|.
+	A default value is 0.
+	'line'
+	To append content after the specified linenum.
+	A default value is '' which append content after the cursor line.
+	'lockmarks'
+	Use |lockmarks| to execute command so that the marks are not adjusted
+	during the operation.
+	A default value is 0.
+
+edit_content({content}[, {options}])	*Vital.Vim.Bufer.edit_content()*
+	Replace content of the current buffer to {content}. It is similar to
+	|:edit| command, mean that |fileformat|, |fileencoding|, and |binary|
+	options of the current buffer will be overwritten in default behavior.
+	It calls |Vital.Vim.Buffer.read_content()| with options.edit=1 in default
+	so developers can change the behavior of internal |:read| command as
+	|Vital.Vim.Buffer.read_content()|.
+
+parse_cmdarg([{cmdarg}])		*Vital.Vim.Buffer.parse_cmdarg*
+	Parse {cmdarg} which is used as [++opt] in |:read| or |:edit| command
+	and return a {options} dictionary which can directly be used in
+	|Vital.Vim.Buffer.read_content()| or
+	|Vital.Vim.Buffer.edit_content()|.
+	If {cmdarg} is not specified, |v:cmdarg| is used instead.
+
+==============================================================================
+vim:tw=78:fo=tcq2mM:ts=8:ft=help:norl
